@@ -4,7 +4,7 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 
 ## Current scope
 
-- multiple-choice answer normalization
+- multiple-choice and exact-match text scoring
 - invalid-output accounting
 - per-category metrics
 - deterministic JSON reports
@@ -19,4 +19,3 @@ python3 -m unittest -v
 ```
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.
-

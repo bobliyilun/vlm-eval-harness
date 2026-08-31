@@ -3,7 +3,7 @@
 - [x] JSONL multiple-choice scorer
 - [x] Free-form choice normalization and invalid-rate reporting
 - [x] Overall and per-category unit tests
-- [ ] Support exact-match text questions
+- [x] Support exact-match text questions
 - [ ] Add configurable case and punctuation normalization
 - [ ] Add numeric-answer tolerance rules
 - [ ] Add confidence fields and calibration error
@@ -20,4 +20,3 @@
 - [ ] Add adversarial answer-format fixtures
 - [ ] Export Markdown summary tables
 - [ ] Publish a reproducible two-model comparison example
-

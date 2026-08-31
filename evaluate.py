@@ -21,12 +21,23 @@ def normalize_choice(value: object) -> Optional[str]:
     return matches[-1].upper() if matches else None
 
 
+def normalize_text(value: object) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    return text or None
+
+
 def score(records: Iterable[dict]) -> dict:
     totals = defaultdict(lambda: {"correct": 0, "total": 0, "invalid": 0})
     for record in records:
         category = str(record.get("category", "uncategorized"))
         expected = normalize_choice(record.get("label"))
-        predicted = normalize_choice(record.get("prediction"))
+        if expected is not None:
+            predicted = normalize_choice(record.get("prediction"))
+        else:
+            expected = normalize_text(record.get("label"))
+            predicted = normalize_text(record.get("prediction"))
         if expected is None:
             raise ValueError(f"invalid label for id={record.get('id')!r}")
         for key in ("overall", category):
@@ -66,4 +77,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
