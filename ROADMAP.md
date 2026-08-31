@@ -1,0 +1,23 @@
+# Roadmap
+
+- [x] JSONL multiple-choice scorer
+- [x] Free-form choice normalization and invalid-rate reporting
+- [x] Overall and per-category unit tests
+- [ ] Support exact-match text questions
+- [ ] Add configurable case and punctuation normalization
+- [ ] Add numeric-answer tolerance rules
+- [ ] Add confidence fields and calibration error
+- [ ] Add top-k prediction scoring
+- [ ] Add macro-average metrics across categories
+- [ ] Add bootstrap confidence intervals
+- [ ] Add paired model comparison with significance estimates
+- [ ] Add duplicate and missing-ID validation
+- [ ] Add dataset schema validation with actionable errors
+- [ ] Add local image-path integrity checks
+- [ ] Add latency and token-usage fields
+- [ ] Add a generic HTTP inference adapter interface
+- [ ] Add an OpenAI-compatible response adapter example
+- [ ] Add adversarial answer-format fixtures
+- [ ] Export Markdown summary tables
+- [ ] Publish a reproducible two-model comparison example
+
