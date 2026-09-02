@@ -15,7 +15,11 @@ The repository evaluates existing predictions; model inference adapters remain w
 
 ```bash
 python3 evaluate.py data/sample_predictions.jsonl
+python3 evaluate.py --ignore-case --ignore-punctuation data/sample_predictions.jsonl
 python3 -m unittest -v
 ```
+
+Text labels are exact-match by default. Use `--ignore-case` and/or
+`--ignore-punctuation` when a dataset treats those differences as equivalent.
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.

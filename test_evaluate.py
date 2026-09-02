@@ -13,6 +13,14 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(normalize_text("  red bus  "), "red bus")
         self.assertIsNone(normalize_text("   "))
 
+    def test_configures_text_case_and_punctuation_normalization(self):
+        self.assertEqual(
+            normalize_text(
+                "Red, Bus!", case_sensitive=False, punctuation_sensitive=False
+            ),
+            "red bus",
+        )
+
     def test_reports_overall_and_category_metrics(self):
         report = score([
             {"id": "1", "category": "ocr", "label": "A", "prediction": "A"},
@@ -32,6 +40,14 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(report["text"]["correct"], 1)
         self.assertEqual(report["text"]["invalid"], 1)
         self.assertAlmostEqual(report["text"]["accuracy"], 1 / 3)
+
+    def test_scores_text_with_configured_normalization(self):
+        report = score(
+            [{"id": "1", "category": "text", "label": "Red bus!", "prediction": "red, bus"}],
+            case_sensitive=False,
+            punctuation_sensitive=False,
+        )
+        self.assertEqual(report["text"]["correct"], 1)
 
 
 if __name__ == "__main__":

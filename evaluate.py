@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import string
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional
@@ -21,14 +22,23 @@ def normalize_choice(value: object) -> Optional[str]:
     return matches[-1].upper() if matches else None
 
 
-def normalize_text(value: object) -> Optional[str]:
+def normalize_text(
+    value: object, *, case_sensitive: bool = True, punctuation_sensitive: bool = True
+) -> Optional[str]:
     if not isinstance(value, str):
         return None
     text = value.strip()
+    if not punctuation_sensitive:
+        text = text.translate(str.maketrans(string.punctuation, " " * len(string.punctuation)))
+        text = " ".join(text.split())
+    if not case_sensitive:
+        text = text.casefold()
     return text or None
 
 
-def score(records: Iterable[dict]) -> dict:
+def score(
+    records: Iterable[dict], *, case_sensitive: bool = True, punctuation_sensitive: bool = True
+) -> dict:
     totals = defaultdict(lambda: {"correct": 0, "total": 0, "invalid": 0})
     for record in records:
         category = str(record.get("category", "uncategorized"))
@@ -36,8 +46,16 @@ def score(records: Iterable[dict]) -> dict:
         if expected is not None:
             predicted = normalize_choice(record.get("prediction"))
         else:
-            expected = normalize_text(record.get("label"))
-            predicted = normalize_text(record.get("prediction"))
+            expected = normalize_text(
+                record.get("label"),
+                case_sensitive=case_sensitive,
+                punctuation_sensitive=punctuation_sensitive,
+            )
+            predicted = normalize_text(
+                record.get("prediction"),
+                case_sensitive=case_sensitive,
+                punctuation_sensitive=punctuation_sensitive,
+            )
         if expected is None:
             raise ValueError(f"invalid label for id={record.get('id')!r}")
         for key in ("overall", category):
@@ -71,8 +89,18 @@ def load_jsonl(path: Path) -> list:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("predictions", type=Path)
+    parser.add_argument("--ignore-case", action="store_true")
+    parser.add_argument("--ignore-punctuation", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(score(load_jsonl(args.predictions)), indent=2, sort_keys=True))
+    print(json.dumps(
+        score(
+            load_jsonl(args.predictions),
+            case_sensitive=not args.ignore_case,
+            punctuation_sensitive=not args.ignore_punctuation,
+        ),
+        indent=2,
+        sort_keys=True,
+    ))
 
 
 if __name__ == "__main__":

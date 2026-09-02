@@ -4,7 +4,7 @@
 - [x] Free-form choice normalization and invalid-rate reporting
 - [x] Overall and per-category unit tests
 - [x] Support exact-match text questions
-- [ ] Add configurable case and punctuation normalization
+- [x] Add configurable case and punctuation normalization
 - [ ] Add numeric-answer tolerance rules
 - [ ] Add confidence fields and calibration error
 - [ ] Add top-k prediction scoring
