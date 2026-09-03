@@ -1,6 +1,6 @@
 import unittest
 
-from evaluate import normalize_choice, normalize_text, score
+from evaluate import normalize_choice, normalize_number, normalize_text, score
 
 
 class EvaluationTests(unittest.TestCase):
@@ -48,6 +48,25 @@ class EvaluationTests(unittest.TestCase):
             punctuation_sensitive=False,
         )
         self.assertEqual(report["text"]["correct"], 1)
+
+    def test_scores_numbers_with_absolute_tolerance(self):
+        report = score([
+            {"id": "1", "category": "count", "label": "2.5", "prediction": "2.54"},
+            {"id": "2", "category": "count", "label": "2.5", "prediction": "2.56"},
+            {"id": "3", "category": "count", "label": "2.5", "prediction": "about 2.5"},
+        ], numeric_tolerance=0.05)
+        self.assertEqual(report["count"]["correct"], 1)
+        self.assertEqual(report["count"]["invalid"], 1)
+
+    def test_numeric_tolerance_is_opt_in_and_validated(self):
+        self.assertEqual(normalize_number("1e2"), 100)
+        self.assertIsNone(normalize_number("NaN"))
+        self.assertEqual(
+            score([{"id": "1", "label": "2", "prediction": "2.0"}])["overall"]["correct"],
+            0,
+        )
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            score([], numeric_tolerance=-0.1)
 
 
 if __name__ == "__main__":

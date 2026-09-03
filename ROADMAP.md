@@ -5,7 +5,7 @@
 - [x] Overall and per-category unit tests
 - [x] Support exact-match text questions
 - [x] Add configurable case and punctuation normalization
-- [ ] Add numeric-answer tolerance rules
+- [x] Add numeric-answer tolerance rules
 - [ ] Add confidence fields and calibration error
 - [ ] Add top-k prediction scoring
 - [ ] Add macro-average metrics across categories
