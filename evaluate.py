@@ -48,6 +48,14 @@ def normalize_number(value: object) -> Optional[Decimal]:
     return number if number.is_finite() else None
 
 
+def normalize_confidence(value: object) -> Optional[float]:
+    """Return a finite confidence probability between zero and one."""
+    number = normalize_number(value)
+    if number is None or not Decimal("0") <= number <= Decimal("1"):
+        return None
+    return float(number)
+
+
 def score(
     records: Iterable[dict], *, case_sensitive: bool = True,
     punctuation_sensitive: bool = True, numeric_tolerance: Optional[float] = None,
@@ -55,7 +63,9 @@ def score(
     if numeric_tolerance is not None and numeric_tolerance < 0:
         raise ValueError("numeric_tolerance must be non-negative")
     tolerance = Decimal(str(numeric_tolerance)) if numeric_tolerance is not None else None
-    totals = defaultdict(lambda: {"correct": 0, "total": 0, "invalid": 0})
+    totals = defaultdict(
+        lambda: {"correct": 0, "total": 0, "invalid": 0, "confidence": []}
+    )
     for record in records:
         category = str(record.get("category", "uncategorized"))
         expected = normalize_choice(record.get("label"))
@@ -79,19 +89,42 @@ def score(
             correct = predicted == expected
         if expected is None:
             raise ValueError(f"invalid label for id={record.get('id')!r}")
+        confidence = None
+        if "confidence" in record:
+            confidence = normalize_confidence(record["confidence"])
+            if confidence is None:
+                raise ValueError(f"invalid confidence for id={record.get('id')!r}")
         for key in ("overall", category):
             totals[key]["total"] += 1
             totals[key]["correct"] += int(correct)
             totals[key]["invalid"] += int(predicted is None)
+            if confidence is not None:
+                totals[key]["confidence"].append((confidence, correct))
 
     report = {}
     for key, values in sorted(totals.items()):
         total = values["total"]
+        confidences = values.pop("confidence")
         report[key] = {
             **values,
             "accuracy": values["correct"] / total if total else 0.0,
             "invalid_rate": values["invalid"] / total if total else 0.0,
         }
+        if confidences:
+            bins = defaultdict(lambda: [0, 0, 0.0])
+            for confidence, correct in confidences:
+                bin_values = bins[min(int(confidence * 10), 9)]
+                bin_values[0] += 1
+                bin_values[1] += int(correct)
+                bin_values[2] += confidence
+            report[key].update({
+                "confidence_count": len(confidences),
+                "mean_confidence": sum(value[0] for value in confidences) / len(confidences),
+                "calibration_error": sum(
+                    count / len(confidences) * abs(correct / count - confidence / count)
+                    for count, correct, confidence in bins.values()
+                ),
+            })
     return report
 
 

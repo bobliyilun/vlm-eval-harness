@@ -6,7 +6,7 @@
 - [x] Support exact-match text questions
 - [x] Add configurable case and punctuation normalization
 - [x] Add numeric-answer tolerance rules
-- [ ] Add confidence fields and calibration error
+- [x] Add confidence fields and calibration error
 - [ ] Add top-k prediction scoring
 - [ ] Add macro-average metrics across categories
 - [ ] Add bootstrap confidence intervals

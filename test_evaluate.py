@@ -1,6 +1,12 @@
 import unittest
 
-from evaluate import normalize_choice, normalize_number, normalize_text, score
+from evaluate import (
+    normalize_choice,
+    normalize_confidence,
+    normalize_number,
+    normalize_text,
+    score,
+)
 
 
 class EvaluationTests(unittest.TestCase):
@@ -67,6 +73,22 @@ class EvaluationTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "non-negative"):
             score([], numeric_tolerance=-0.1)
+
+    def test_reports_confidence_and_calibration_error(self):
+        report = score([
+            {"id": "1", "label": "A", "prediction": "A", "confidence": 0.9},
+            {"id": "2", "label": "A", "prediction": "B", "confidence": 0.8},
+            {"id": "3", "label": "A", "prediction": "A"},
+        ])
+        self.assertEqual(report["overall"]["confidence_count"], 2)
+        self.assertAlmostEqual(report["overall"]["mean_confidence"], 0.85)
+        self.assertAlmostEqual(report["overall"]["calibration_error"], 0.45)
+
+    def test_validates_confidence_probabilities(self):
+        self.assertEqual(normalize_confidence("0.5"), 0.5)
+        self.assertIsNone(normalize_confidence(1.1))
+        with self.assertRaisesRegex(ValueError, "invalid confidence"):
+            score([{"id": "1", "label": "A", "prediction": "A", "confidence": None}])
 
 
 if __name__ == "__main__":

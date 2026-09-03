@@ -8,6 +8,7 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 - invalid-output accounting
 - per-category metrics
 - deterministic JSON reports
+- optional confidence coverage, mean confidence, and calibration error
 
 The repository evaluates existing predictions; model inference adapters remain work in progress.
 
@@ -25,5 +26,9 @@ Text labels are exact-match by default. Use `--ignore-case` and/or
 For direct numeric labels and predictions, `--numeric-tolerance` enables an
 absolute tolerance (for example, `0.05` accepts `2.54` for a label of `2.5`).
 Wrapped numeric prose is reported as invalid rather than guessed.
+
+Predictions may include an optional `confidence` field from 0 to 1. Metrics
+with at least one such field report coverage, mean confidence, and a 10-bin
+expected calibration error; records without confidence remain supported.
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.
