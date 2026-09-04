@@ -90,6 +90,20 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid confidence"):
             score([{"id": "1", "label": "A", "prediction": "A", "confidence": None}])
 
+    def test_reports_top_k_hits_without_changing_top_one_accuracy(self):
+        report = score([
+            {"id": "1", "label": "A", "prediction": "B", "top_k": ["B", "A"]},
+            {"id": "2", "label": "A", "prediction": "A", "top_k": ["B", "C"]},
+            {"id": "3", "label": "A", "prediction": "A"},
+        ])
+        self.assertAlmostEqual(report["overall"]["accuracy"], 2 / 3)
+        self.assertEqual(report["overall"]["top_k_count"], 2)
+        self.assertAlmostEqual(report["overall"]["top_k_accuracy"], 0.5)
+
+    def test_validates_top_k_predictions(self):
+        with self.assertRaisesRegex(ValueError, "invalid top_k"):
+            score([{"id": "1", "label": "A", "prediction": "A", "top_k": []}])
+
 
 if __name__ == "__main__":
     unittest.main()
