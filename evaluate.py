@@ -161,6 +161,12 @@ def score(
                 "top_k_count": len(top_k),
                 "top_k_accuracy": sum(top_k) / len(top_k),
             })
+    categories = [values for key, values in report.items() if key != "overall"]
+    if categories:
+        report["overall"].update({
+            "macro_accuracy": sum(values["accuracy"] for values in categories) / len(categories),
+            "macro_invalid_rate": sum(values["invalid_rate"] for values in categories) / len(categories),
+        })
     return report
 
 

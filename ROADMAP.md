@@ -8,7 +8,7 @@
 - [x] Add numeric-answer tolerance rules
 - [x] Add confidence fields and calibration error
 - [x] Add top-k prediction scoring
-- [ ] Add macro-average metrics across categories
+- [x] Add macro-average metrics across categories
 - [ ] Add bootstrap confidence intervals
 - [ ] Add paired model comparison with significance estimates
 - [ ] Add duplicate and missing-ID validation

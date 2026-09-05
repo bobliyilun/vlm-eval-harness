@@ -10,6 +10,7 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 - deterministic JSON reports
 - optional confidence coverage, mean confidence, and calibration error
 - optional top-k candidate-list scoring
+- macro-average accuracy and invalid-rate metrics across categories
 
 The repository evaluates existing predictions; model inference adapters remain work in progress.
 
@@ -35,5 +36,8 @@ expected calibration error; records without confidence remain supported.
 To measure candidate-list accuracy, add a non-empty ordered `top_k` JSON array
 to any record. The report retains top-1 `accuracy` and adds `top_k_count` plus
 `top_k_accuracy` over records with that field.
+
+The overall report also includes `macro_accuracy` and `macro_invalid_rate`:
+each is the unweighted mean of the respective per-category metric.
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.

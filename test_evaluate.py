@@ -37,6 +37,16 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(report["overall"]["invalid"], 1)
         self.assertAlmostEqual(report["ocr"]["accuracy"], 0.5)
 
+    def test_reports_macro_metrics_across_categories(self):
+        report = score([
+            {"id": "1", "category": "small", "label": "A", "prediction": "A"},
+            {"id": "2", "category": "large", "label": "A", "prediction": "B"},
+            {"id": "3", "category": "large", "label": "A", "prediction": "A"},
+            {"id": "4", "category": "large", "label": "A", "prediction": ""},
+        ])
+        self.assertAlmostEqual(report["overall"]["macro_accuracy"], 2 / 3)
+        self.assertAlmostEqual(report["overall"]["macro_invalid_rate"], 1 / 6)
+
     def test_scores_text_labels_by_exact_match(self):
         report = score([
             {"id": "1", "category": "text", "label": "red bus", "prediction": "red bus"},
