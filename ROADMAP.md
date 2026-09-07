@@ -9,7 +9,7 @@
 - [x] Add confidence fields and calibration error
 - [x] Add top-k prediction scoring
 - [x] Add macro-average metrics across categories
-- [ ] Add bootstrap confidence intervals
+- [x] Add bootstrap confidence intervals
 - [ ] Add paired model comparison with significance estimates
 - [ ] Add duplicate and missing-ID validation
 - [ ] Add dataset schema validation with actionable errors

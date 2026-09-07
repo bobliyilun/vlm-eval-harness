@@ -1,6 +1,7 @@
 import unittest
 
 from evaluate import (
+    bootstrap_interval,
     normalize_choice,
     normalize_confidence,
     normalize_number,
@@ -113,6 +114,22 @@ class EvaluationTests(unittest.TestCase):
     def test_validates_top_k_predictions(self):
         with self.assertRaisesRegex(ValueError, "invalid top_k"):
             score([{"id": "1", "label": "A", "prediction": "A", "top_k": []}])
+
+    def test_reports_deterministic_bootstrap_confidence_intervals(self):
+        records = [
+            {"id": "1", "category": "ocr", "label": "A", "prediction": "A"},
+            {"id": "2", "category": "ocr", "label": "A", "prediction": "B"},
+            {"id": "3", "category": "ocr", "label": "A", "prediction": ""},
+        ]
+        report = score(records, bootstrap_samples=200, bootstrap_seed=7)
+        self.assertEqual(report["ocr"]["bootstrap_samples"], 200)
+        self.assertEqual(report["ocr"]["accuracy_confidence_interval"], [0.0, 1.0])
+        self.assertEqual(report["ocr"]["invalid_rate_confidence_interval"], [0.0, 1.0])
+        self.assertEqual(bootstrap_interval([1, 0, 0], 200, 7), [0.0, 1.0])
+
+    def test_validates_bootstrap_sample_count(self):
+        with self.assertRaisesRegex(ValueError, "positive"):
+            score([], bootstrap_samples=0)
 
 
 if __name__ == "__main__":

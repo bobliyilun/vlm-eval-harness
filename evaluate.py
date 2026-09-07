@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import random
 import string
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
@@ -11,6 +12,21 @@ from typing import Iterable, Optional
 
 
 CHOICE = re.compile(r"\b([A-Z])\b", re.IGNORECASE)
+
+
+def bootstrap_interval(values: list[int], samples: int, seed: int) -> list[float]:
+    """Return a deterministic percentile bootstrap 95% interval for binary values."""
+    if not values:
+        return [0.0, 0.0]
+    generator = random.Random(seed)
+    size = len(values)
+    estimates = sorted(
+        sum(values[generator.randrange(size)] for _ in range(size)) / size
+        for _ in range(samples)
+    )
+    lower_index = int(0.025 * (samples - 1))
+    upper_index = int(0.975 * (samples - 1))
+    return [estimates[lower_index], estimates[upper_index]]
 
 
 def normalize_choice(value: object) -> Optional[str]:
@@ -71,12 +87,18 @@ def normalize_prediction(
 def score(
     records: Iterable[dict], *, case_sensitive: bool = True,
     punctuation_sensitive: bool = True, numeric_tolerance: Optional[float] = None,
+    bootstrap_samples: Optional[int] = None, bootstrap_seed: int = 0,
 ) -> dict:
     if numeric_tolerance is not None and numeric_tolerance < 0:
         raise ValueError("numeric_tolerance must be non-negative")
+    if bootstrap_samples is not None and bootstrap_samples < 1:
+        raise ValueError("bootstrap_samples must be positive")
     tolerance = Decimal(str(numeric_tolerance)) if numeric_tolerance is not None else None
     totals = defaultdict(
-        lambda: {"correct": 0, "total": 0, "invalid": 0, "confidence": [], "top_k": []}
+        lambda: {
+            "correct": 0, "total": 0, "invalid": 0, "confidence": [], "top_k": [],
+            "outcomes": [],
+        }
     )
     for record in records:
         category = str(record.get("category", "uncategorized"))
@@ -126,6 +148,7 @@ def score(
             totals[key]["total"] += 1
             totals[key]["correct"] += int(correct)
             totals[key]["invalid"] += int(predicted is None)
+            totals[key]["outcomes"].append((int(correct), int(predicted is None)))
             if confidence is not None:
                 totals[key]["confidence"].append((confidence, correct))
             if top_k is not None:
@@ -136,6 +159,7 @@ def score(
         total = values["total"]
         confidences = values.pop("confidence")
         top_k = values.pop("top_k")
+        outcomes = values.pop("outcomes")
         report[key] = {
             **values,
             "accuracy": values["correct"] / total if total else 0.0,
@@ -160,6 +184,16 @@ def score(
             report[key].update({
                 "top_k_count": len(top_k),
                 "top_k_accuracy": sum(top_k) / len(top_k),
+            })
+        if bootstrap_samples is not None:
+            report[key].update({
+                "bootstrap_samples": bootstrap_samples,
+                "accuracy_confidence_interval": bootstrap_interval(
+                    [correct for correct, _ in outcomes], bootstrap_samples, bootstrap_seed
+                ),
+                "invalid_rate_confidence_interval": bootstrap_interval(
+                    [invalid for _, invalid in outcomes], bootstrap_samples, bootstrap_seed + 1
+                ),
             })
     categories = [values for key, values in report.items() if key != "overall"]
     if categories:
@@ -191,6 +225,14 @@ def main() -> None:
         "--numeric-tolerance", type=float,
         help="accept direct numeric predictions within this absolute tolerance",
     )
+    parser.add_argument(
+        "--bootstrap-samples", type=int,
+        help="report deterministic 95% bootstrap intervals using this many resamples",
+    )
+    parser.add_argument(
+        "--bootstrap-seed", type=int, default=0,
+        help="random seed used for bootstrap resampling (default: 0)",
+    )
     args = parser.parse_args()
     print(json.dumps(
         score(
@@ -198,6 +240,8 @@ def main() -> None:
             case_sensitive=not args.ignore_case,
             punctuation_sensitive=not args.ignore_punctuation,
             numeric_tolerance=args.numeric_tolerance,
+            bootstrap_samples=args.bootstrap_samples,
+            bootstrap_seed=args.bootstrap_seed,
         ),
         indent=2,
         sort_keys=True,

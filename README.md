@@ -11,6 +11,7 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 - optional confidence coverage, mean confidence, and calibration error
 - optional top-k candidate-list scoring
 - macro-average accuracy and invalid-rate metrics across categories
+- optional deterministic bootstrap confidence intervals for accuracy and invalid rate
 
 The repository evaluates existing predictions; model inference adapters remain work in progress.
 
@@ -20,6 +21,7 @@ The repository evaluates existing predictions; model inference adapters remain w
 python3 evaluate.py data/sample_predictions.jsonl
 python3 evaluate.py --ignore-case --ignore-punctuation data/sample_predictions.jsonl
 python3 evaluate.py --numeric-tolerance 0.05 predictions.jsonl
+python3 evaluate.py --bootstrap-samples 1000 predictions.jsonl
 python3 -m unittest -v
 ```
 
@@ -39,5 +41,9 @@ to any record. The report retains top-1 `accuracy` and adds `top_k_count` plus
 
 The overall report also includes `macro_accuracy` and `macro_invalid_rate`:
 each is the unweighted mean of the respective per-category metric.
+
+For uncertainty estimates, `--bootstrap-samples` adds deterministic percentile
+95% confidence intervals for accuracy and invalid rate to every reported group.
+Use `--bootstrap-seed` to change the resampling sequence (the default is `0`).
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.
