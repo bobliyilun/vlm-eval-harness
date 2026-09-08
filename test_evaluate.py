@@ -6,6 +6,7 @@ from evaluate import (
     normalize_confidence,
     normalize_number,
     normalize_text,
+    paired_comparison,
     score,
 )
 
@@ -130,6 +131,30 @@ class EvaluationTests(unittest.TestCase):
     def test_validates_bootstrap_sample_count(self):
         with self.assertRaisesRegex(ValueError, "positive"):
             score([], bootstrap_samples=0)
+
+    def test_compares_paired_predictions_with_exact_significance(self):
+        baseline = [
+            {"id": "1", "label": "A", "prediction": "B"},
+            {"id": "2", "label": "A", "prediction": "A"},
+            {"id": "3", "label": "A", "prediction": "B"},
+        ]
+        candidate = [
+            {"id": "1", "label": "A", "prediction": "A"},
+            {"id": "2", "label": "A", "prediction": "B"},
+            {"id": "3", "label": "A", "prediction": "A"},
+        ]
+        report = paired_comparison(baseline, candidate)
+        self.assertEqual(report["candidate_only_correct"], 2)
+        self.assertEqual(report["baseline_only_correct"], 1)
+        self.assertAlmostEqual(report["accuracy_difference"], 1 / 3)
+        self.assertEqual(report["exact_p_value"], 1.0)
+
+    def test_paired_comparison_requires_matching_unique_ids(self):
+        record = {"id": "1", "label": "A", "prediction": "A"}
+        with self.assertRaisesRegex(ValueError, "unique"):
+            paired_comparison([record, record], [record, record])
+        with self.assertRaisesRegex(ValueError, "matching"):
+            paired_comparison([record], [{"id": "2", "label": "A", "prediction": "A"}])
 
 
 if __name__ == "__main__":

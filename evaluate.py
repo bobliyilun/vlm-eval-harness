@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 import re
 import random
 import string
@@ -27,6 +28,48 @@ def bootstrap_interval(values: list[int], samples: int, seed: int) -> list[float
     lower_index = int(0.025 * (samples - 1))
     upper_index = int(0.975 * (samples - 1))
     return [estimates[lower_index], estimates[upper_index]]
+
+
+def paired_comparison(
+    baseline: list[dict], candidate: list[dict], *, case_sensitive: bool = True,
+    punctuation_sensitive: bool = True, numeric_tolerance: Optional[float] = None,
+) -> dict:
+    """Compare two prediction exports with an exact two-sided paired test."""
+    baseline_by_id = {record.get("id"): record for record in baseline}
+    candidate_by_id = {record.get("id"): record for record in candidate}
+    if len(baseline_by_id) != len(baseline) or len(candidate_by_id) != len(candidate):
+        raise ValueError("paired comparison requires unique record ids")
+    if baseline_by_id.keys() != candidate_by_id.keys():
+        raise ValueError("paired comparison requires matching record ids")
+    wins = losses = baseline_correct = candidate_correct = 0
+    options = {
+        "case_sensitive": case_sensitive,
+        "punctuation_sensitive": punctuation_sensitive,
+        "numeric_tolerance": numeric_tolerance,
+    }
+    for record_id in baseline_by_id:
+        first, second = baseline_by_id[record_id], candidate_by_id[record_id]
+        if first.get("label") != second.get("label"):
+            raise ValueError(f"mismatched label for id={record_id!r}")
+        first_correct = score([first], **options)["overall"]["correct"]
+        second_correct = score([second], **options)["overall"]["correct"]
+        baseline_correct += first_correct
+        candidate_correct += second_correct
+        wins += second_correct and not first_correct
+        losses += first_correct and not second_correct
+    discordant = wins + losses
+    tail = sum(math.comb(discordant, value) for value in range(min(wins, losses) + 1))
+    return {
+        "total": len(baseline),
+        "baseline_accuracy": baseline_correct / len(baseline) if baseline else 0.0,
+        "candidate_accuracy": candidate_correct / len(candidate) if candidate else 0.0,
+        "accuracy_difference": (
+            (candidate_correct - baseline_correct) / len(baseline) if baseline else 0.0
+        ),
+        "candidate_only_correct": wins,
+        "baseline_only_correct": losses,
+        "exact_p_value": min(1.0, 2 * tail / 2**discordant) if discordant else 1.0,
+    }
 
 
 def normalize_choice(value: object) -> Optional[str]:
@@ -222,6 +265,10 @@ def main() -> None:
     parser.add_argument("--ignore-case", action="store_true")
     parser.add_argument("--ignore-punctuation", action="store_true")
     parser.add_argument(
+        "--compare-with", type=Path,
+        help="second JSONL export to compare against the positional baseline",
+    )
+    parser.add_argument(
         "--numeric-tolerance", type=float,
         help="accept direct numeric predictions within this absolute tolerance",
     )
@@ -234,15 +281,32 @@ def main() -> None:
         help="random seed used for bootstrap resampling (default: 0)",
     )
     args = parser.parse_args()
+    baseline = load_jsonl(args.predictions)
+    options = {
+        "case_sensitive": not args.ignore_case,
+        "punctuation_sensitive": not args.ignore_punctuation,
+        "numeric_tolerance": args.numeric_tolerance,
+    }
+    report = score(
+        baseline,
+        **options,
+        bootstrap_samples=args.bootstrap_samples,
+        bootstrap_seed=args.bootstrap_seed,
+    )
+    if args.compare_with:
+        candidate = load_jsonl(args.compare_with)
+        report = {
+            "baseline": report,
+            "candidate": score(
+                candidate,
+                **options,
+                bootstrap_samples=args.bootstrap_samples,
+                bootstrap_seed=args.bootstrap_seed,
+            ),
+            "paired_comparison": paired_comparison(baseline, candidate, **options),
+        }
     print(json.dumps(
-        score(
-            load_jsonl(args.predictions),
-            case_sensitive=not args.ignore_case,
-            punctuation_sensitive=not args.ignore_punctuation,
-            numeric_tolerance=args.numeric_tolerance,
-            bootstrap_samples=args.bootstrap_samples,
-            bootstrap_seed=args.bootstrap_seed,
-        ),
+        report,
         indent=2,
         sort_keys=True,
     ))

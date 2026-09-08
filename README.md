@@ -22,6 +22,7 @@ python3 evaluate.py data/sample_predictions.jsonl
 python3 evaluate.py --ignore-case --ignore-punctuation data/sample_predictions.jsonl
 python3 evaluate.py --numeric-tolerance 0.05 predictions.jsonl
 python3 evaluate.py --bootstrap-samples 1000 predictions.jsonl
+python3 evaluate.py baseline.jsonl --compare-with candidate.jsonl
 python3 -m unittest -v
 ```
 
@@ -47,3 +48,7 @@ For uncertainty estimates, `--bootstrap-samples` adds deterministic percentile
 Use `--bootstrap-seed` to change the resampling sequence (the default is `0`).
 
 See [ROADMAP.md](ROADMAP.md) for the next adapters and evaluation slices.
+
+`--compare-with` requires the same unique record IDs and labels in both files.
+It reports each model's accuracy, the paired accuracy difference, discordant-pair
+counts, and a two-sided exact paired p-value.
