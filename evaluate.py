@@ -35,10 +35,10 @@ def paired_comparison(
     punctuation_sensitive: bool = True, numeric_tolerance: Optional[float] = None,
 ) -> dict:
     """Compare two prediction exports with an exact two-sided paired test."""
+    baseline = list(require_unique_ids(baseline))
+    candidate = list(require_unique_ids(candidate))
     baseline_by_id = {record.get("id"): record for record in baseline}
     candidate_by_id = {record.get("id"): record for record in candidate}
-    if len(baseline_by_id) != len(baseline) or len(candidate_by_id) != len(candidate):
-        raise ValueError("paired comparison requires unique record ids")
     if baseline_by_id.keys() != candidate_by_id.keys():
         raise ValueError("paired comparison requires matching record ids")
     wins = losses = baseline_correct = candidate_correct = 0
@@ -127,6 +127,22 @@ def normalize_prediction(
     )
 
 
+def require_unique_ids(records: Iterable[dict]) -> Iterable[dict]:
+    """Yield records after rejecting missing, unhashable, or duplicate IDs."""
+    seen = set()
+    for record in records:
+        record_id = record.get("id")
+        if record_id is None or (isinstance(record_id, str) and not record_id.strip()):
+            raise ValueError("missing record id")
+        try:
+            if record_id in seen:
+                raise ValueError(f"duplicate record id={record_id!r}")
+            seen.add(record_id)
+        except TypeError as exc:
+            raise ValueError(f"invalid record id={record_id!r}") from exc
+        yield record
+
+
 def score(
     records: Iterable[dict], *, case_sensitive: bool = True,
     punctuation_sensitive: bool = True, numeric_tolerance: Optional[float] = None,
@@ -143,7 +159,7 @@ def score(
             "outcomes": [],
         }
     )
-    for record in records:
+    for record in require_unique_ids(records):
         category = str(record.get("category", "uncategorized"))
         expected = normalize_choice(record.get("label"))
         if expected is None and tolerance is not None:

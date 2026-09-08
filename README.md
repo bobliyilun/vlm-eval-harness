@@ -43,6 +43,9 @@ to any record. The report retains top-1 `accuracy` and adds `top_k_count` plus
 The overall report also includes `macro_accuracy` and `macro_invalid_rate`:
 each is the unweighted mean of the respective per-category metric.
 
+Every record must have a non-empty, unique `id`; duplicate or missing IDs are
+rejected before scoring.
+
 For uncertainty estimates, `--bootstrap-samples` adds deterministic percentile
 95% confidence intervals for accuracy and invalid rate to every reported group.
 Use `--bootstrap-seed` to change the resampling sequence (the default is `0`).

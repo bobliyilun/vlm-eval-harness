@@ -132,6 +132,13 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "positive"):
             score([], bootstrap_samples=0)
 
+    def test_rejects_missing_and_duplicate_record_ids(self):
+        record = {"id": "1", "label": "A", "prediction": "A"}
+        with self.assertRaisesRegex(ValueError, "missing record id"):
+            score([{"label": "A", "prediction": "A"}])
+        with self.assertRaisesRegex(ValueError, "duplicate record id='1'"):
+            score([record, record])
+
     def test_compares_paired_predictions_with_exact_significance(self):
         baseline = [
             {"id": "1", "label": "A", "prediction": "B"},
@@ -151,8 +158,10 @@ class EvaluationTests(unittest.TestCase):
 
     def test_paired_comparison_requires_matching_unique_ids(self):
         record = {"id": "1", "label": "A", "prediction": "A"}
-        with self.assertRaisesRegex(ValueError, "unique"):
+        with self.assertRaisesRegex(ValueError, "duplicate record id"):
             paired_comparison([record, record], [record, record])
+        with self.assertRaisesRegex(ValueError, "missing record id"):
+            paired_comparison([{"label": "A", "prediction": "A"}], [record])
         with self.assertRaisesRegex(ValueError, "matching"):
             paired_comparison([record], [{"id": "2", "label": "A", "prediction": "A"}])
 

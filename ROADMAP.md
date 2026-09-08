@@ -11,7 +11,7 @@
 - [x] Add macro-average metrics across categories
 - [x] Add bootstrap confidence intervals
 - [x] Add paired model comparison with significance estimates
-- [ ] Add duplicate and missing-ID validation
+- [x] Add duplicate and missing-ID validation
 - [ ] Add dataset schema validation with actionable errors
 - [ ] Add local image-path integrity checks
 - [ ] Add latency and token-usage fields
