@@ -43,8 +43,18 @@ to any record. The report retains top-1 `accuracy` and adds `top_k_count` plus
 The overall report also includes `macro_accuracy` and `macro_invalid_rate`:
 each is the unweighted mean of the respective per-category metric.
 
-Every record must have a non-empty, unique `id`; duplicate or missing IDs are
+Every record must have a non-empty string `id`; duplicate or missing IDs are
 rejected before scoring.
+
+## Dataset schema
+
+Each non-blank JSONL line must be a JSON object with `id`, `label`, and
+`prediction` fields. `id` and an optional `category` must be non-empty strings;
+the scorer validates label, prediction, and optional metric values according to
+the selected scoring mode. Unknown fields are retained for dataset metadata and
+future adapters. Validation errors name the one-based record number and
+offending field before scoring, so a malformed export can be fixed without
+interpreting a partial report.
 
 For uncertainty estimates, `--bootstrap-samples` adds deterministic percentile
 95% confidence intervals for accuracy and invalid rate to every reported group.

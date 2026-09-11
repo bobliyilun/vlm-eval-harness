@@ -128,18 +128,24 @@ def normalize_prediction(
 
 
 def require_unique_ids(records: Iterable[dict]) -> Iterable[dict]:
-    """Yield records after rejecting missing, unhashable, or duplicate IDs."""
+    """Yield schema-valid records after rejecting duplicate IDs."""
     seen = set()
-    for record in records:
-        record_id = record.get("id")
-        if record_id is None or (isinstance(record_id, str) and not record_id.strip()):
-            raise ValueError("missing record id")
-        try:
-            if record_id in seen:
-                raise ValueError(f"duplicate record id={record_id!r}")
-            seen.add(record_id)
-        except TypeError as exc:
-            raise ValueError(f"invalid record id={record_id!r}") from exc
+    for record_number, record in enumerate(records, 1):
+        if not isinstance(record, dict):
+            raise ValueError(f"record {record_number}: expected a JSON object")
+        for field in ("id", "label", "prediction"):
+            if field not in record:
+                raise ValueError(f"record {record_number}: missing required field {field!r}")
+        record_id = record["id"]
+        if not isinstance(record_id, str) or not record_id.strip():
+            raise ValueError(f"record {record_number}: id must be a non-empty string")
+        if "category" in record and (
+            not isinstance(record["category"], str) or not record["category"].strip()
+        ):
+            raise ValueError(f"record {record_number}: category must be a non-empty string")
+        if record_id in seen:
+            raise ValueError(f"record {record_number}: duplicate id={record_id!r}")
+        seen.add(record_id)
         yield record
 
 

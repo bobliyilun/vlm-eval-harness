@@ -134,10 +134,20 @@ class EvaluationTests(unittest.TestCase):
 
     def test_rejects_missing_and_duplicate_record_ids(self):
         record = {"id": "1", "label": "A", "prediction": "A"}
-        with self.assertRaisesRegex(ValueError, "missing record id"):
+        with self.assertRaisesRegex(ValueError, "missing required field 'id'"):
             score([{"label": "A", "prediction": "A"}])
-        with self.assertRaisesRegex(ValueError, "duplicate record id='1'"):
+        with self.assertRaisesRegex(ValueError, "duplicate id='1'"):
             score([record, record])
+
+    def test_reports_actionable_dataset_schema_errors(self):
+        with self.assertRaisesRegex(ValueError, "record 1: expected a JSON object"):
+            score(["not a record"])
+        with self.assertRaisesRegex(ValueError, "record 1: missing required field 'prediction'"):
+            score([{"id": "1", "label": "A"}])
+        with self.assertRaisesRegex(ValueError, "record 1: id must be a non-empty string"):
+            score([{"id": 1, "label": "A", "prediction": "A"}])
+        with self.assertRaisesRegex(ValueError, "record 1: category must be a non-empty string"):
+            score([{"id": "1", "category": "", "label": "A", "prediction": "A"}])
 
     def test_compares_paired_predictions_with_exact_significance(self):
         baseline = [
@@ -158,9 +168,9 @@ class EvaluationTests(unittest.TestCase):
 
     def test_paired_comparison_requires_matching_unique_ids(self):
         record = {"id": "1", "label": "A", "prediction": "A"}
-        with self.assertRaisesRegex(ValueError, "duplicate record id"):
+        with self.assertRaisesRegex(ValueError, "duplicate id"):
             paired_comparison([record, record], [record, record])
-        with self.assertRaisesRegex(ValueError, "missing record id"):
+        with self.assertRaisesRegex(ValueError, "missing required field 'id'"):
             paired_comparison([{"label": "A", "prediction": "A"}], [record])
         with self.assertRaisesRegex(ValueError, "matching"):
             paired_comparison([record], [{"id": "2", "label": "A", "prediction": "A"}])

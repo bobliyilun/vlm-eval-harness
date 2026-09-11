@@ -12,7 +12,7 @@
 - [x] Add bootstrap confidence intervals
 - [x] Add paired model comparison with significance estimates
 - [x] Add duplicate and missing-ID validation
-- [ ] Add dataset schema validation with actionable errors
+- [x] Add dataset schema validation with actionable errors
 - [ ] Add local image-path integrity checks
 - [ ] Add latency and token-usage fields
 - [ ] Add a generic HTTP inference adapter interface
