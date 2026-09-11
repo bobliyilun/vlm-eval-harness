@@ -50,7 +50,9 @@ rejected before scoring.
 
 Each non-blank JSONL line must be a JSON object with `id`, `label`, and
 `prediction` fields. `id` and an optional `category` must be non-empty strings;
-the scorer validates label, prediction, and optional metric values according to
+an optional `image_path` must be a non-empty local file path. Relative image
+paths are resolved from the JSONL file's directory and checked before scoring.
+The scorer validates label, prediction, and optional metric values according to
 the selected scoring mode. Unknown fields are retained for dataset metadata and
 future adapters. Validation errors name the one-based record number and
 offending field before scoring, so a malformed export can be fixed without

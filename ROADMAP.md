@@ -13,7 +13,7 @@
 - [x] Add paired model comparison with significance estimates
 - [x] Add duplicate and missing-ID validation
 - [x] Add dataset schema validation with actionable errors
-- [ ] Add local image-path integrity checks
+- [x] Add local image-path integrity checks
 - [ ] Add latency and token-usage fields
 - [ ] Add a generic HTTP inference adapter interface
 - [ ] Add an OpenAI-compatible response adapter example

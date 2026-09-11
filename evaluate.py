@@ -143,6 +143,10 @@ def require_unique_ids(records: Iterable[dict]) -> Iterable[dict]:
             not isinstance(record["category"], str) or not record["category"].strip()
         ):
             raise ValueError(f"record {record_number}: category must be a non-empty string")
+        if "image_path" in record and (
+            not isinstance(record["image_path"], str) or not record["image_path"].strip()
+        ):
+            raise ValueError(f"record {record_number}: image_path must be a non-empty string")
         if record_id in seen:
             raise ValueError(f"record {record_number}: duplicate id={record_id!r}")
         seen.add(record_id)
@@ -275,9 +279,23 @@ def load_jsonl(path: Path) -> list:
         for line_number, line in enumerate(handle, 1):
             if line.strip():
                 try:
-                    records.append(json.loads(line))
+                    record = json.loads(line)
                 except json.JSONDecodeError as exc:
                     raise ValueError(f"invalid JSON on line {line_number}: {exc}") from exc
+                if isinstance(record, dict) and "image_path" in record:
+                    image_path = record["image_path"]
+                    if not isinstance(image_path, str) or not image_path.strip():
+                        raise ValueError(
+                            f"record {line_number}: image_path must be a non-empty string"
+                        )
+                    resolved = Path(image_path)
+                    if not resolved.is_absolute():
+                        resolved = path.parent / resolved
+                    if not resolved.is_file():
+                        raise ValueError(
+                            f"record {line_number}: image_path does not name a file: {image_path!r}"
+                        )
+                records.append(record)
     return records
 
 

@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from evaluate import (
     bootstrap_interval,
@@ -7,6 +9,7 @@ from evaluate import (
     normalize_number,
     normalize_text,
     paired_comparison,
+    load_jsonl,
     score,
 )
 
@@ -148,6 +151,25 @@ class EvaluationTests(unittest.TestCase):
             score([{"id": 1, "label": "A", "prediction": "A"}])
         with self.assertRaisesRegex(ValueError, "record 1: category must be a non-empty string"):
             score([{"id": "1", "category": "", "label": "A", "prediction": "A"}])
+        with self.assertRaisesRegex(ValueError, "record 1: image_path must be a non-empty string"):
+            score([{"id": "1", "image_path": "", "label": "A", "prediction": "A"}])
+
+    def test_checks_local_image_paths_relative_to_jsonl(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "image.png").touch()
+            export = root / "predictions.jsonl"
+            export.write_text(
+                '{"id": "1", "label": "A", "prediction": "A", "image_path": "image.png"}\n',
+                encoding="utf-8",
+            )
+            self.assertEqual(load_jsonl(export)[0]["image_path"], "image.png")
+            export.write_text(
+                '{"id": "1", "label": "A", "prediction": "A", "image_path": "missing.png"}\n',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "record 1: image_path does not name a file"):
+                load_jsonl(export)
 
     def test_compares_paired_predictions_with_exact_significance(self):
         baseline = [
