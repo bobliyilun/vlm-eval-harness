@@ -105,6 +105,24 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid confidence"):
             score([{"id": "1", "label": "A", "prediction": "A", "confidence": None}])
 
+    def test_reports_latency_and_token_usage(self):
+        report = score([
+            {"id": "1", "category": "ocr", "label": "A", "prediction": "A",
+             "latency_ms": 125.5, "input_tokens": 10, "output_tokens": 2},
+            {"id": "2", "category": "ocr", "label": "A", "prediction": "A",
+             "latency_ms": "74.5", "input_tokens": 8},
+            {"id": "3", "label": "A", "prediction": "A", "output_tokens": 3},
+        ])
+        self.assertEqual(report["overall"]["latency_count"], 2)
+        self.assertEqual(report["overall"]["total_latency_ms"], 200)
+        self.assertEqual(report["overall"]["mean_latency_ms"], 100)
+        self.assertEqual(report["overall"]["input_tokens"], 18)
+        self.assertEqual(report["overall"]["output_tokens"], 5)
+        with self.assertRaisesRegex(ValueError, "invalid latency_ms"):
+            score([{"id": "1", "label": "A", "prediction": "A", "latency_ms": -1}])
+        with self.assertRaisesRegex(ValueError, "invalid input_tokens"):
+            score([{"id": "1", "label": "A", "prediction": "A", "input_tokens": 1.5}])
+
     def test_reports_top_k_hits_without_changing_top_one_accuracy(self):
         report = score([
             {"id": "1", "label": "A", "prediction": "B", "top_k": ["B", "A"]},

@@ -9,6 +9,7 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 - per-category metrics
 - deterministic JSON reports
 - optional confidence coverage, mean confidence, and calibration error
+- optional latency and input/output token-usage totals
 - optional top-k candidate-list scoring
 - macro-average accuracy and invalid-rate metrics across categories
 - optional deterministic bootstrap confidence intervals for accuracy and invalid rate
@@ -57,6 +58,11 @@ the selected scoring mode. Unknown fields are retained for dataset metadata and
 future adapters. Validation errors name the one-based record number and
 offending field before scoring, so a malformed export can be fixed without
 interpreting a partial report.
+
+Records may optionally include non-negative `latency_ms`, `input_tokens`, and
+`output_tokens`. Each report group with those fields includes latency coverage,
+mean and total latency, plus summed input and output token counts. Token counts
+must be whole numbers.
 
 For uncertainty estimates, `--bootstrap-samples` adds deterministic percentile
 95% confidence intervals for accuracy and invalid rate to every reported group.

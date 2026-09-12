@@ -115,6 +115,18 @@ def normalize_confidence(value: object) -> Optional[float]:
     return float(number)
 
 
+def normalize_nonnegative_number(value: object) -> Optional[float]:
+    """Return a finite, non-negative measurement."""
+    number = normalize_number(value)
+    return float(number) if number is not None and number >= 0 else None
+
+
+def normalize_token_count(value: object) -> Optional[int]:
+    """Return a non-negative integral token count."""
+    number = normalize_number(value)
+    return int(number) if number is not None and number >= 0 and number == number.to_integral() else None
+
+
 def normalize_prediction(
     value: object, expected: object, *, case_sensitive: bool, punctuation_sensitive: bool
 ) -> Optional[object]:
@@ -166,7 +178,7 @@ def score(
     totals = defaultdict(
         lambda: {
             "correct": 0, "total": 0, "invalid": 0, "confidence": [], "top_k": [],
-            "outcomes": [],
+            "outcomes": [], "latency_ms": [], "input_tokens": [], "output_tokens": [],
         }
     )
     for record in require_unique_ids(records):
@@ -213,6 +225,17 @@ def score(
             confidence = normalize_confidence(record["confidence"])
             if confidence is None:
                 raise ValueError(f"invalid confidence for id={record.get('id')!r}")
+        latency_ms = None
+        if "latency_ms" in record:
+            latency_ms = normalize_nonnegative_number(record["latency_ms"])
+            if latency_ms is None:
+                raise ValueError(f"invalid latency_ms for id={record.get('id')!r}")
+        token_counts = {}
+        for field in ("input_tokens", "output_tokens"):
+            if field in record:
+                token_counts[field] = normalize_token_count(record[field])
+                if token_counts[field] is None:
+                    raise ValueError(f"invalid {field} for id={record.get('id')!r}")
         for key in ("overall", category):
             totals[key]["total"] += 1
             totals[key]["correct"] += int(correct)
@@ -222,6 +245,10 @@ def score(
                 totals[key]["confidence"].append((confidence, correct))
             if top_k is not None:
                 totals[key]["top_k"].append(top_k)
+            if latency_ms is not None:
+                totals[key]["latency_ms"].append(latency_ms)
+            for field, value in token_counts.items():
+                totals[key][field].append(value)
 
     report = {}
     for key, values in sorted(totals.items()):
@@ -229,6 +256,9 @@ def score(
         confidences = values.pop("confidence")
         top_k = values.pop("top_k")
         outcomes = values.pop("outcomes")
+        latency_ms = values.pop("latency_ms")
+        input_tokens = values.pop("input_tokens")
+        output_tokens = values.pop("output_tokens")
         report[key] = {
             **values,
             "accuracy": values["correct"] / total if total else 0.0,
@@ -254,6 +284,15 @@ def score(
                 "top_k_count": len(top_k),
                 "top_k_accuracy": sum(top_k) / len(top_k),
             })
+        if latency_ms:
+            report[key].update({
+                "latency_count": len(latency_ms),
+                "mean_latency_ms": sum(latency_ms) / len(latency_ms),
+                "total_latency_ms": sum(latency_ms),
+            })
+        for field, counts in (("input_tokens", input_tokens), ("output_tokens", output_tokens)):
+            if counts:
+                report[key][field] = sum(counts)
         if bootstrap_samples is not None:
             report[key].update({
                 "bootstrap_samples": bootstrap_samples,
