@@ -16,7 +16,7 @@
 - [x] Add local image-path integrity checks
 - [x] Add latency and token-usage fields
 - [x] Add a generic HTTP inference adapter interface
-- [ ] Add an OpenAI-compatible response adapter example
+- [x] Add an OpenAI-compatible response adapter example
 - [ ] Add adversarial answer-format fixtures
 - [ ] Export Markdown summary tables
 - [ ] Publish a reproducible two-model comparison example

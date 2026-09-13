@@ -36,6 +36,19 @@ prediction = adapter.infer({"prompt": "Which letter is correct?"})
 The adapter uses a JSON `POST`, has a 30-second default timeout, and leaves
 provider-specific request and response shapes to those two mapping functions.
 
+For an OpenAI-compatible `/v1/chat/completions` endpoint, use the included
+adapter. Dataset records need a `prompt` field; pass `api_key` only when the
+endpoint requires bearer authentication:
+
+```python
+from inference import OpenAICompatibleAdapter
+
+adapter = OpenAICompatibleAdapter(
+    "http://localhost:8000/v1/chat/completions", "my-vlm", api_key="..."
+)
+prediction = adapter.infer({"prompt": "Which letter is correct?"})
+```
+
 ## Run
 
 ```bash

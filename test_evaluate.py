@@ -14,7 +14,7 @@ from evaluate import (
     load_jsonl,
     score,
 )
-from inference import HTTPInferenceAdapter
+from inference import HTTPInferenceAdapter, OpenAICompatibleAdapter
 
 
 class EvaluationTests(unittest.TestCase):
@@ -34,6 +34,23 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(request.full_url, "http://example.test/infer")
         self.assertEqual(json.loads(request.data), {"question": "Which letter?"})
         self.assertEqual(request.get_method(), "POST")
+
+    def test_openai_compatible_adapter_posts_chat_completion(self):
+        adapter = OpenAICompatibleAdapter(
+            "http://example.test/v1/chat/completions", "demo-vlm", api_key="secret"
+        )
+        response = MagicMock()
+        response.read.return_value = b'{"choices": [{"message": {"content": "B"}}]}'
+        transport = MagicMock()
+        transport.__enter__.return_value = response
+        with patch("inference.urlopen", return_value=transport) as urlopen:
+            self.assertEqual(adapter.infer({"prompt": "Which letter?"}), "B")
+        request = urlopen.call_args.args[0]
+        self.assertEqual(json.loads(request.data), {
+            "model": "demo-vlm",
+            "messages": [{"role": "user", "content": "Which letter?"}],
+        })
+        self.assertEqual(request.get_header("Authorization"), "Bearer secret")
 
     def test_normalizes_wrapped_choices(self):
         self.assertEqual(normalize_choice("The answer is B."), "B")
