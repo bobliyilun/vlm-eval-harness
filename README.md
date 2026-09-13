@@ -16,6 +16,26 @@ A small, model-agnostic evaluation harness for vision-language model outputs. It
 
 The repository evaluates existing predictions; model inference adapters remain work in progress.
 
+## HTTP inference adapters
+
+`HTTPInferenceAdapter` provides the small common layer for JSON-speaking model
+endpoints. Supply the endpoint URL plus functions that map a dataset record to
+the endpoint's JSON request and its JSON response to a prediction:
+
+```python
+from inference import HTTPInferenceAdapter
+
+adapter = HTTPInferenceAdapter(
+    "http://localhost:8000/infer",
+    lambda record: {"prompt": record["prompt"]},
+    lambda response: response["answer"],
+)
+prediction = adapter.infer({"prompt": "Which letter is correct?"})
+```
+
+The adapter uses a JSON `POST`, has a 30-second default timeout, and leaves
+provider-specific request and response shapes to those two mapping functions.
+
 ## Run
 
 ```bash

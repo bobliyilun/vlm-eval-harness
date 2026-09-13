@@ -15,7 +15,7 @@
 - [x] Add dataset schema validation with actionable errors
 - [x] Add local image-path integrity checks
 - [x] Add latency and token-usage fields
-- [ ] Add a generic HTTP inference adapter interface
+- [x] Add a generic HTTP inference adapter interface
 - [ ] Add an OpenAI-compatible response adapter example
 - [ ] Add adversarial answer-format fixtures
 - [ ] Export Markdown summary tables

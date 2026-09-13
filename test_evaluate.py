@@ -1,6 +1,8 @@
+import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import MagicMock, patch
 
 from evaluate import (
     bootstrap_interval,
@@ -12,9 +14,27 @@ from evaluate import (
     load_jsonl,
     score,
 )
+from inference import HTTPInferenceAdapter
 
 
 class EvaluationTests(unittest.TestCase):
+    def test_http_adapter_posts_json_and_parses_prediction(self):
+        adapter = HTTPInferenceAdapter(
+            "http://example.test/infer",
+            lambda record: {"question": record["prompt"]},
+            lambda response: response["answer"],
+        )
+        response = MagicMock()
+        response.read.return_value = b'{"answer": "B"}'
+        transport = MagicMock()
+        transport.__enter__.return_value = response
+        with patch("inference.urlopen", return_value=transport) as urlopen:
+            self.assertEqual(adapter.infer({"prompt": "Which letter?"}), "B")
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "http://example.test/infer")
+        self.assertEqual(json.loads(request.data), {"question": "Which letter?"})
+        self.assertEqual(request.get_method(), "POST")
+
     def test_normalizes_wrapped_choices(self):
         self.assertEqual(normalize_choice("The answer is B."), "B")
         self.assertEqual(normalize_choice("c"), "C")
