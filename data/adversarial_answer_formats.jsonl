@@ -1,0 +1,7 @@
+{"id": "wrapped-parentheses", "category": "choice-format", "label": "B", "prediction": "Answer: (B)"}
+{"id": "wrapped-markdown", "category": "choice-format", "label": "C", "prediction": "**Final answer:** C"}
+{"id": "wrapped-prose", "category": "choice-format", "label": "D", "prediction": "After checking the image, the answer is D."}
+{"id": "lowercase-choice", "category": "choice-format", "label": "A", "prediction": "a"}
+{"id": "final-answer-wins", "category": "choice-format", "label": "C", "prediction": "I considered B, but my final answer is C."}
+{"id": "no-choice", "category": "choice-format", "label": "A", "prediction": "Cannot determine the answer."}
+{"id": "joined-letters", "category": "choice-format", "label": "B", "prediction": "AB"}

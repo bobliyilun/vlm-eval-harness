@@ -18,6 +18,13 @@ from inference import HTTPInferenceAdapter, OpenAICompatibleAdapter
 
 
 class EvaluationTests(unittest.TestCase):
+    def test_adversarial_answer_format_fixture(self):
+        records = load_jsonl(Path(__file__).parent / "data/adversarial_answer_formats.jsonl")
+        report = score(records)["choice-format"]
+        self.assertEqual(report["total"], 7)
+        self.assertEqual(report["correct"], 5)
+        self.assertEqual(report["invalid"], 2)
+
     def test_http_adapter_posts_json_and_parses_prediction(self):
         adapter = HTTPInferenceAdapter(
             "http://example.test/infer",

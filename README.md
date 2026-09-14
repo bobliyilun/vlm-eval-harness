@@ -77,6 +77,15 @@ to any record. The report retains top-1 `accuracy` and adds `top_k_count` plus
 The overall report also includes `macro_accuracy` and `macro_invalid_rate`:
 each is the unweighted mean of the respective per-category metric.
 
+`data/adversarial_answer_formats.jsonl` is a reusable fixture for common
+choice wrappers (parentheses, Markdown, prose, lowercase, and a final answer
+after a discarded option) as well as unparseable answer formats. Use it when
+checking changes to choice normalization:
+
+```bash
+python3 evaluate.py data/adversarial_answer_formats.jsonl
+```
+
 Every record must have a non-empty string `id`; duplicate or missing IDs are
 rejected before scoring.
 
